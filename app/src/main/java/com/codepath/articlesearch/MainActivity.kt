@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.codepath.articlesearch.databinding.ActivityMainBinding
 import com.codepath.asynchttpclient.AsyncHttpClient
 import com.codepath.asynchttpclient.callback.JsonHttpResponseHandler
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -88,15 +89,17 @@ class MainActivity : AppCompatActivity() {
 
                     // TODO: Save the articles and reload the screen
                     parsedJson.response?.docs?.let { list ->
-                        (application as ArticleApplication).db.articleDao().deleteAll()
-                        (application as ArticleApplication).db.articleDao().insertAll(list.map {
-                            ArticleEntity(
-                                headline = it.headline?.main,
-                                articleAbstract = it.abstract,
-                                byline = it.byline?.original,
-                                mediaImageUrl = it.mediaImageUrl
-                            )
-                        })
+                        lifecycleScope.launch(IO) {
+                            (application as ArticleApplication).db.articleDao().deleteAll()
+                            (application as ArticleApplication).db.articleDao().insertAll(list.map {
+                                ArticleEntity(
+                                    headline = it.headline?.main,
+                                    articleAbstract = it.abstract,
+                                    byline = it.byline?.original,
+                                    mediaImageUrl = it.mediaImageUrl
+                                )
+                            })
+                        }
                     }
                 } catch (e: JSONException) {
                     Log.e(TAG, "Exception: $e")
